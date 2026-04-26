@@ -102,7 +102,7 @@ publishing {
                 url = uri("https://maven.pkg.github.com/Pagely-wisely/common")
                 credentials {
                     username = gprUser ?: System.getenv('GPR_USER')
-                    password = gprPass ?: System.getenv('GPR_USER')
+                    password = gprPass ?: System.getenv('GPR_TOKEN')
                 }
             }
         } else {
