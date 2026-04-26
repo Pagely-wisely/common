@@ -1,5 +1,6 @@
 package com.pagely.common.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.pagely.common.exception.ErrorCode;
 import com.pagely.common.pagination.PageResponse;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse {
 
     private final boolean success;
