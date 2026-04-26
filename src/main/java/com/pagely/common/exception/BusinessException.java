@@ -9,14 +9,12 @@ import lombok.Getter;
  * - 서비스 레이어에서 발생하는 도메인/비즈니스 예외를 표현하기 위해 사용합니다. - ErrorCode를 기반으로 예외의 종류와 응답 메시지를 일관되게 관리합니다. - GlobalExceptionHandler에서
  * 해당 예외를 공통 포맷으로 변환하여 응답합니다.
  * </p>
- *
  * <p>
  * 사용 예시:
  * <pre>{@code
  * throw new BusinessException(UserErrorCode.USER_NOT_FOUND);
  * throw new BusinessException(UserErrorCode.INVALID_PASSWORD, "비밀번호가 일치하지 않습니다.");
  * }</pre>
- * </p>
  */
 @Getter
 public class BusinessException extends RuntimeException {
