@@ -1,33 +1,124 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.14'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java-library'
+    id 'maven-publish'
 }
 
 group = 'com.pagely'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+    withJavadocJar()
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
+}
+
+// Spring Boot BOM을 version catalog로 관리 (소비자에게 강제하지 않음)
+ext {
+    springBootVersion = '3.5.1'
+    lombokVersion = '1.18.34'
+    querydslVersion = '5.1.0'
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testAnnotationProcessor 'org.projectlombok:lombok'
+    // ── BOM (소비자에게 전이되지 않음, 라이브러리 컴파일용) ──────────────────
+    compileOnly platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+    annotationProcessor platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+    testImplementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+
+    // ── Lombok ──────────────────────────────────────────────────────────────
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // ── Jackson ──────────────────────────
+    compileOnly "com.fasterxml.jackson.core:jackson-databind"
+
+    // ── JPA (소비자가 Spring Data JPA 를 사용한다고 가정) ────────────────────
+    compileOnly "jakarta.persistence:jakarta.persistence-api"
+    compileOnly "org.springframework.data:spring-data-commons"
+    compileOnly "org.springframework.data:spring-data-jpa"
+
+    // ── QueryDSL (Q 슈퍼타입 클래스 생성 — QBaseTime, QBaseAudit) ───────────
+    compileOnly "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+    api "com.querydsl:querydsl-core:${querydslVersion}"
+
+    // ── Spring Web/MVC (GlobalExceptionHandler 용) ───────────────────────────
+    compileOnly "org.springframework:spring-web"
+    compileOnly "org.springframework:spring-webmvc"
+    compileOnly "org.springframework.boot:spring-boot-autoconfigure"
+    compileOnly "jakarta.validation:jakarta.validation-api"
+    compileOnly "jakarta.servlet:jakarta.servlet-api"
+
+    // ── Test ─────────────────────────────────────────────────────────────────
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-web")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    testRuntimeOnly("com.h2database:h2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = "Common Library"
+                description = "MSA 공통 라이브러리 (Entity, Pagination, Exception, Response)"
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+
+        def gprUser = providers.gradleProperty("gpr.user").orNull
+        def gprPass = providers.gradleProperty("gpr.key").orNull
+
+        println(">>> [DEBUG] GPR_USER env       = ${System.getenv('GPR_USER')}")
+        println(">>> [DEBUG] GPR_TOKEN env        = ${System.getenv('GPR_TOKEN') != null ? 'SET(' + System.getenv('GPR_TOKEN').length() + 'chars)' : 'NULL'}")
+        println(">>> [DEBUG] GitHubPackagesUsername  = ${gprUser}")
+        println(">>> [DEBUG] GitHubPackagesPassword  = ${gprPass != null ? 'SET(' + gprPass.length() + 'chars)' : 'NULL'}")
+
+        if (gprUser != null && gprPass != null) {
+            println(">>> [DEBUG] GitHubPackages 저장소 추가됨 → PublishToMavenRepository task 생성")
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/Pagely-wisely/common")
+                credentials {
+                    username = gprUser ?: System.getenv('GPR_USER')
+                    password = gprPass ?: System.getenv('GPR_USER')
+                }
+            }
+        } else {
+            println(">>> [DEBUG] GitHubPackages 저장소 건너뜀 (프로퍼티 없음) → task 미생성")
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = "UTF-8"
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
