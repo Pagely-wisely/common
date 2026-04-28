@@ -1,1 +1,3 @@
 com.pagely.common.config.CommonWebAutoConfiguration
+com.pagely.common.config.AuthAutoConfiguration
+com.pagely.common.config.JpaAuditingAutoConfiguration
