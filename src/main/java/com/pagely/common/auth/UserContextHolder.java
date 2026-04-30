@@ -16,7 +16,8 @@ import java.util.UUID;
  * </ul>
  */
 public final class UserContextHolder {
-
+    // 시스템 전용 고정 UUID 선언 (DB에 존재하거나 논리적으로 약속된 값)
+    public static final UUID SYSTEM_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private static final ThreadLocal<UserContext> CONTEXT = new ThreadLocal<>();
 
     private UserContextHolder() {
@@ -47,9 +48,6 @@ public final class UserContextHolder {
         return ctx;
     }
 
-    /**
-     * 현재 컨텍스트 반환. 미인증 시 null.
-     */
     public static UUID getCurrentUserId() {
         UserContext ctx = CONTEXT.get();
         return ctx == null ? null : ctx.userId();
@@ -63,9 +61,6 @@ public final class UserContextHolder {
         return getOrThrow().userId();
     }
 
-    /**
-     * 현재 userId 반환. 미인증 시 {@link Optional#empty()}.
-     */
     public static Role getCurrentRole() {
         UserContext ctx = CONTEXT.get();
         return ctx == null ? null : ctx.role();
@@ -81,5 +76,11 @@ public final class UserContextHolder {
 
     public static boolean isAuthenticated() {
         return CONTEXT.get() != null;
+    }
+
+   /* 현재 사용자 ID가 없으면 SYSTEM_ID를 반환하는 메서드*/
+    public static UUID getUserIdOrSystem() {
+        UUID userId = getCurrentUserId();
+        return (userId != null) ? userId : SYSTEM_ID;
     }
 }
