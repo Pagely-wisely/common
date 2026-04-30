@@ -12,9 +12,6 @@ public record UserContext(
         UUID userId,
         Role role
 ) {
-    /**
-     * userId, role로 UserContext 생성. null 불가.
-     */
     public static UserContext of(UUID userId, Role role) {
         if (userId == null) {
             throw new IllegalArgumentException("userId는 null일 수 없습니다.");
